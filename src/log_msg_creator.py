@@ -2,10 +2,10 @@ import pathlib
 
 from src.logger import Logger
 from src.resources import file_up_to_date, file_has_been_updated, directory_copied_to_replica, \
-    directory_deleted_from_replica, file_deleted_from_replica, file_copied_to_replica
+    directory_deleted_from_replica, file_deleted_from_replica, file_copied_to_replica, directory_created
 
 
-class FileLogger:
+class LogMsgCreator:
     def __init__(self, logger: Logger):
         self._logger = logger
 
@@ -43,4 +43,8 @@ class FileLogger:
             str(source_item_path.parent.absolute()),
             str(replica_item_path.parent.absolute())
         )
+        self._logger.log(log_msg)
+
+    def log_create_directory(self, directory_path: pathlib.Path):
+        log_msg = directory_created.format(str(directory_path.absolute()))
         self._logger.log(log_msg)
