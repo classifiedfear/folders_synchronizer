@@ -1,26 +1,28 @@
-
+import asyncio
 import os
-import time
+
 
 from src.configuration import Configuration
 from src.file_logger import FileLogger
+from src.logger import Logger
 from src.folder_synchonizer import FolderSynchronizer
 
 
 class Application:
     @staticmethod
-    def run():
+    async def run():
         configuration = Configuration()
         Application._check_folders_exist(configuration.source, configuration.replica)
-        file_logger = FileLogger(configuration.log_file)
+        logger = Logger(configuration.log_file)
+        file_logger = FileLogger(logger)
         folder_synchronizer = FolderSynchronizer(file_logger)
 
         while True:
             try:
-                folder_synchronizer.synchronize(configuration.source, configuration.replica)
-                time.sleep(configuration.time_period)
+                await folder_synchronizer.synchronize(configuration.source, configuration.replica)
+                await asyncio.sleep(configuration.time_period)
             except KeyboardInterrupt:
-                file_logger.log('Terminated manually!')
+                logger.log('Terminated manually!')
                 raise SystemExit
 
     @staticmethod
@@ -32,6 +34,7 @@ class Application:
 
 
 if __name__ == '__main__':
-    Application.run()
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(Application.run())
 
 
