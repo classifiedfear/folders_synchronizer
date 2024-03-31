@@ -4,8 +4,8 @@ import shutil
 import pathlib
 import typing
 
-from .folder_data_dto import FolderDataDTO
-from .log_msg_creator import LogMsgCreator
+from folder_data_dto import FolderDataDTO
+from log_msg_creator import LogMsgCreator
 
 
 class FolderSynchronizer:
@@ -13,20 +13,10 @@ class FolderSynchronizer:
         self._log_msg_creator = log_msg_creator
 
     def synchronize(self, source_folder: pathlib.Path, replica_folder: pathlib.Path) -> None:
-        self._check_folders_exist(source_folder, replica_folder)
         source = FolderDataDTO(pathlib.Path(source_folder), self._get_set_items_from_folder(source_folder))
         replica = FolderDataDTO(pathlib.Path(replica_folder), self._get_set_items_from_folder(replica_folder))
         self._sync_source_items_to_replica_folder(source, replica)
         self._sync_replica_items_to_source_folder(replica, source)
-
-    def _check_folders_exist(self, source_folder: pathlib.Path, replica_folder: pathlib.Path):
-        if not os.path.isdir(source_folder):
-            os.makedirs(source_folder)
-            self._log_msg_creator.log_create_directory(source_folder)
-
-        if not os.path.isdir(replica_folder):
-            os.makedirs(replica_folder)
-            self._log_msg_creator.log_create_directory(replica_folder)
 
     @staticmethod
     def _get_set_items_from_folder(folder: str | pathlib.Path) -> typing.Set[pathlib.Path]:

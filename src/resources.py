@@ -1,7 +1,9 @@
-file_up_to_date = '{!r} from {!r} doesnt need change in {!r}.'
-file_has_been_updated = '{!r} from {!r} has been updated in {!r}.'
-file_deleted_from_replica = '{!r} has been deleted from {!r}, because doesnt exist in {!r}.'
-file_copied_to_replica = '{!r} from {!r} has been copied in {!r}.'
-directory_copied_to_replica = 'Directory {!r} was copied to {!r}.'
-directory_deleted_from_replica = 'Deleted directory {!r} that not exists in {!r}.'
-directory_created = '{!r} was created.'
+file_up_to_date = '- {!r} file from source {!r} does not need change in replica {!r}.'
+file_has_been_updated = '- {!r} file from source {!r} has been updated in replica {!r}.'
+file_deleted_from_replica = """"
+    - {!r} file has been deleted from source {!r}, because does not exist in replica {!r}.
+"""
+file_copied_to_replica = '- {!r} file from source {!r} has been copied in replica {!r}.'
+directory_copied_to_replica = '- Folder from source {!r} was copied to replica {!r}.'
+directory_deleted_from_replica = '- Deleted folder from replica {!r} that not exists in source {!r}.'
+directory_created = '- {!r} was created.'

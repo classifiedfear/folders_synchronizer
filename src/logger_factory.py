@@ -1,7 +1,7 @@
 import logging
 
 
-class Logger:
+class LoggerFactory:
     def __init__(self, file_name: str) -> None:
         self._logger = logging.getLogger()
         self._logger.setLevel(logging.INFO)
@@ -35,6 +35,5 @@ class Logger:
         for handler in handlers:
             self._logger.addHandler(handler)
 
-    def log(self, message: str) -> None:
-        log_msg = f'- {message}'
-        self._logger.info(log_msg)
+    def get_logger(self) -> logging.Logger:
+        return self._logger

@@ -1,20 +1,23 @@
-import asyncio
-import os
 import pathlib
 import time
 
-from src.configuration import Configuration
-from src.log_msg_creator import LogMsgCreator
-from src.logger import Logger
-from src.folder_synchonizer import FolderSynchronizer
+from configuration import Configuration
+from log_msg_creator import LogMsgCreator
+from logger_factory import LoggerFactory
+from folder_synchonizer import FolderSynchronizer
 
 
 class Application:
     @staticmethod
     def run():
         configuration = Configuration()
-        logger = Logger(configuration.log_file)
-        file_logger = LogMsgCreator(logger)
+        logger_factory = LoggerFactory(configuration.log_file)
+        file_logger = LogMsgCreator(logger_factory.get_logger())
+        errors = configuration.get_errors_if_exists()
+        if errors:
+            for error in errors:
+                file_logger.log_error(error)
+                raise ValueError(error)
         folder_synchronizer = FolderSynchronizer(file_logger)
 
         while True:
@@ -25,7 +28,7 @@ class Application:
                 if before_next_sync > 0:
                     time.sleep(before_next_sync)
             except KeyboardInterrupt:
-                logger.log('Terminated manually!')
+                file_logger.log_terminated_manually()
                 raise SystemExit
 
 
