@@ -11,3 +11,4 @@ Usage example:
 2) replica : Path to the replica folder to be synchonized (requerd)
 3) --log-file : Path to the log-file (default: log.txt)
 4) --time-period : Period for synchonization in seconds (default: 5)
+To stop the script, use CTRL+C
