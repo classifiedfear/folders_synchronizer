@@ -13,29 +13,24 @@ class FolderSynchronizer:
         self._log_msg_creator = log_msg_creator
 
     def synchronize(self, source_folder: pathlib.Path, replica_folder: pathlib.Path) -> None:
-        source = FolderDataDTO(pathlib.Path(source_folder), self._get_set_items_from_folder(source_folder))
-        replica = FolderDataDTO(pathlib.Path(replica_folder), self._get_set_items_from_folder(replica_folder))
+        source = FolderDataDTO(source_folder, self._get_item_paths_from_folder(source_folder))
+        replica = FolderDataDTO(replica_folder, self._get_item_paths_from_folder(replica_folder))
         self._sync_source_items_to_replica_folder(source, replica)
-        self._sync_replica_items_to_source_folder(replica, source)
+        self._remove_replica_items_not_in_source(replica, source)
 
     @staticmethod
-    def _get_set_items_from_folder(folder: str | pathlib.Path) -> typing.Set[pathlib.Path]:
+    def _get_item_paths_from_folder(folder: str | pathlib.Path) -> typing.Set[pathlib.Path]:
         return set(pathlib.Path(os.path.join(folder, item)) for item in os.listdir(folder))
 
-    def _sync_source_items_to_replica_folder(self, source: FolderDataDTO, replica: FolderDataDTO) -> None:
+    def _sync_source_items_to_replica_folder(self, source: FolderDataDTO, replica_dto: FolderDataDTO) -> None:
         for source_item in source.internal_items:
-            self._sync_source_item_to_replica_folder(source_item, replica)
+            replica_item_path = pathlib.Path(replica_dto.folder_path, source_item.name)
+            if replica_item_path in replica_dto.internal_items:
+                self._sync_item_existing_in_both_folders(source_item, replica_item_path)
+            else:
+                self._copy_item_to_replica(source_item, replica_item_path)
 
-    def _sync_source_item_to_replica_folder(
-            self, source_item: pathlib.Path, replica: FolderDataDTO
-    ) -> None:
-        replica_item_path = pathlib.Path(replica.folder_path, source_item.name)
-        if replica_item_path in replica.internal_items:
-            self._work_with_items_which_exist_in_both_folders(source_item, replica_item_path)
-        else:
-            self._work_with_items_which_not_exist_in_replica_folder(source_item, replica_item_path)
-
-    def _work_with_items_which_exist_in_both_folders(
+    def _sync_item_existing_in_both_folders(
             self, source_item_path: pathlib.Path, replica_item_path: pathlib.Path
     ) -> None:
         if source_item_path.is_dir():
@@ -58,7 +53,7 @@ class FolderSynchronizer:
         shutil.copy2(source_item_path, replica_item_data)
         self._log_msg_creator.log_updated_file_in_replica(source_item_path, replica_item_data)
 
-    def _work_with_items_which_not_exist_in_replica_folder(
+    def _copy_item_to_replica(
             self, source_item_path: pathlib.Path, replica_item_path: pathlib.Path
     ) -> None:
         if source_item_path.is_dir():
@@ -74,34 +69,30 @@ class FolderSynchronizer:
         shutil.copy2(source_item_path, replica_item_data)
         self._log_msg_creator.log_copy_file_to_replica(source_item_path, replica_item_data)
 
-    def _sync_replica_items_to_source_folder(
-            self, replica_folder_data: FolderDataDTO, source_folder_data: FolderDataDTO
+    def _remove_replica_items_not_in_source(
+            self, replica_dto: FolderDataDTO, source_dto: FolderDataDTO
     ) -> None:
-        for replica_item in replica_folder_data.internal_items:
-            source_item_path = pathlib.Path(os.path.join(source_folder_data.folder_path, replica_item.name))
-            if source_item_path not in source_folder_data.internal_items:
-                self._work_with_item_which_not_exists_in_source(replica_item, source_folder_data)
+        for replica_item in replica_dto.internal_items:
+            source_item_path = pathlib.Path(os.path.join(source_dto.folder_path, replica_item.name))
+            if source_item_path not in source_dto.internal_items:
+                self._remove_replica_item_not_in_source(replica_item, source_dto)
 
-    def _work_with_item_which_not_exists_in_source(
-            self, replica_item_path: pathlib.Path, source_folder_data: FolderDataDTO
+    def _remove_replica_item_not_in_source(
+            self, replica_item_path: pathlib.Path, source_dto: FolderDataDTO
     ) -> None:
         if replica_item_path.is_dir():
-            self._remove_directory_that_not_exist_in_source(replica_item_path, source_folder_data)
+            self._remove_directory_not_in_source(replica_item_path, source_dto)
         else:
-            self._remove_file_that_not_exists_in_source(replica_item_path, source_folder_data)
+            self._remove_file_not_in_source(replica_item_path, source_dto)
 
-    def _remove_directory_that_not_exist_in_source(
+    def _remove_directory_not_in_source(
             self, replica_item_path: pathlib.Path, source_folder_data: FolderDataDTO
     ) -> None:
         shutil.rmtree(replica_item_path)
         self._log_msg_creator.log_deleted_directory_from_replica(source_folder_data.folder_path, replica_item_path)
 
-    def _remove_file_that_not_exists_in_source(
+    def _remove_file_not_in_source(
             self, replica_item_path: pathlib.Path, source_folder_data: FolderDataDTO
     ) -> None:
         os.remove(replica_item_path)
         self._log_msg_creator.log_deleted_file_from_replica(source_folder_data.folder_path, replica_item_path)
-
-
-
-
