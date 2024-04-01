@@ -1,5 +1,6 @@
 import pathlib
 import time
+import typing
 
 from configuration import Configuration
 from log_msg_creator import LogMsgCreator
@@ -18,10 +19,7 @@ class Application:
             raise ValueError(errors)
 
         log_msg_creator = LogMsgCreator(logger_factory.get_logger())
-        if errors:
-            for error in errors:
-                log_msg_creator.log_error(error)
-            raise ValueError(errors)
+        Application._check_on_errors(errors, log_msg_creator)
 
         folder_synchronizer = FolderSynchronizer(log_msg_creator)
         log_msg_creator.log_start_sync(
@@ -33,7 +31,8 @@ class Application:
     def _main(configuration: Configuration, folder_synchronizer: FolderSynchronizer, log_msg_creator: LogMsgCreator):
         while True:
             try:
-                Application._create_folders_if_not_exists(configuration.source, configuration.replica, log_msg_creator)
+                errors = configuration.get_errors_if_exists()
+                Application._check_on_errors(errors, log_msg_creator)
                 start = time.time()
                 folder_synchronizer.synchronize(pathlib.Path(configuration.source), pathlib.Path(configuration.replica))
                 wait = start + configuration.time_period - time.time()
@@ -44,16 +43,11 @@ class Application:
                 raise SystemExit
 
     @staticmethod
-    def _create_folders_if_not_exists(
-            source_folder: pathlib.Path, replica_folder: pathlib.Path, log_msg_creator: LogMsgCreator
-    ) -> None:
-        if not source_folder.exists():
-            source_folder.mkdir()
-            log_msg_creator.created_folder(source_folder)
-
-        if not replica_folder.exists():
-            replica_folder.mkdir()
-            log_msg_creator.created_folder(replica_folder)
+    def _check_on_errors(errors: typing.List[str], log_msg_creator: LogMsgCreator):
+        if errors:
+            for error in errors:
+                log_msg_creator.log_error(error)
+            raise ValueError(errors)
 
 
 if __name__ == '__main__':
